@@ -2,7 +2,7 @@
 
 import * as Slider from "@radix-ui/react-slider";
 import { Check, Copy, Download, Info, LoaderCircle, PackageCheck, RotateCcw, Sparkles, WandSparkles } from "lucide-react";
-import type { PointerEvent } from "react";
+import type { CSSProperties, PointerEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { LOOKS, RATIOS } from "@/lib/constants";
@@ -16,11 +16,12 @@ import { cn } from "@/lib/utils";
 
 export function ControlPanel({ item }: { item: ImageItem }) {
   const panel = useLastLook((state) => state.mobilePanel);
-  const sheetExpanded = useLastLook((state) => state.mobileSheetExpanded);
-  const setSheetExpanded = useLastLook((state) => state.setMobileSheetExpanded);
+  const sheetHeight = useLastLook((state) => state.mobileSheetHeight);
+  const setSheetHeight = useLastLook((state) => state.setMobileSheetHeight);
   const t = useI18n();
   const dragStartY = useRef<number | null>(null);
-  const dragHandled = useRef(false);
+  const dragStartHeight = useRef(0);
+  const [dragging, setDragging] = useState(false);
   const mobileTitles = {
     crop: t.panel.titles.crop,
     look: t.panel.titles.look,
@@ -34,43 +35,49 @@ export function ControlPanel({ item }: { item: ImageItem }) {
     preview: "Original · Safe · IG Shift",
     export: `${selectedCount} ${t.common.selected}`,
   };
+  const minSheetHeight = 58;
+  const maxSheetHeight = typeof window === "undefined" ? 520 : Math.max(240, Math.min(window.innerHeight * 0.72, window.innerHeight - 132));
+  const visibleSheetHeight = Math.round(clamp(sheetHeight, minSheetHeight, maxSheetHeight));
+  const sheetHasBody = visibleSheetHeight > 104;
   const onHandlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     dragStartY.current = event.clientY;
-    dragHandled.current = false;
+    dragStartHeight.current = visibleSheetHeight;
+    setDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onHandlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const delta = event.clientY - dragStartY.current;
+    setSheetHeight(clamp(dragStartHeight.current - delta, minSheetHeight, maxSheetHeight));
   };
   const onHandlePointerUp = (event: PointerEvent<HTMLButtonElement>) => {
     if (dragStartY.current === null) return;
-    const delta = event.clientY - dragStartY.current;
     dragStartY.current = null;
-    if (Math.abs(delta) < 20) return;
-    dragHandled.current = true;
-    setSheetExpanded(delta < 0);
-    window.setTimeout(() => {
-      dragHandled.current = false;
-    }, 0);
+    setDragging(false);
+    event.currentTarget.releasePointerCapture(event.pointerId);
   };
   return (
     <aside
+      style={{ "--mobile-sheet-height": `${visibleSheetHeight}px` } as CSSProperties}
       className={cn(
-        "mobile-editor-sheet glass-panel scrollbar-none absolute inset-x-0 bottom-[54px] z-40 w-full border-white/8 transition-all duration-300 ease-out lg:static lg:h-full lg:max-h-none lg:w-[348px] lg:shrink-0 lg:overflow-y-auto lg:border-l",
-        sheetExpanded
-          ? "h-[24dvh] min-h-[176px] overflow-y-auto"
-          : "h-[58px] min-h-[58px] overflow-hidden",
+        "mobile-editor-sheet glass-panel scrollbar-none absolute inset-x-0 bottom-[54px] z-40 h-[var(--mobile-sheet-height)] min-h-[var(--mobile-sheet-height)] w-full border-white/8 lg:static lg:h-full lg:max-h-none lg:min-h-0 lg:w-[348px] lg:shrink-0 lg:overflow-y-auto lg:border-l",
+        dragging ? "transition-none" : "transition-[height,min-height] duration-150 ease-out",
+        sheetHasBody ? "overflow-y-auto" : "overflow-hidden",
       )}
     >
       <div className="sticky top-0 z-20 border-b border-white/7 bg-[#101010]/78 px-4 pb-2 pt-1.5 backdrop-blur-2xl lg:hidden">
         <button
           type="button"
-          aria-label={sheetExpanded ? "Hide controls and show the photo" : "Show controls"}
-          aria-expanded={sheetExpanded}
+          aria-label="Resize controls"
+          title="Drag to resize controls"
           onPointerDown={onHandlePointerDown}
+          onPointerMove={onHandlePointerMove}
           onPointerUp={onHandlePointerUp}
-          onClick={() => {
-            if (dragHandled.current) return;
-            setSheetExpanded(!sheetExpanded);
+          onPointerCancel={() => {
+            dragStartY.current = null;
+            setDragging(false);
           }}
-          className="mx-auto mb-2 flex h-5 w-28 touch-none items-center justify-center rounded-full text-white/45"
+          className="mx-auto mb-2 flex h-5 w-32 touch-none cursor-ns-resize items-center justify-center rounded-full text-white/45"
         >
           <span className="h-1 w-10 rounded-full bg-white/24" />
         </button>
@@ -94,7 +101,7 @@ export function ControlPanel({ item }: { item: ImageItem }) {
         <p className="eyebrow">{t.panel.finalAdjustments}</p>
         <h2 className="mt-1 text-sm font-semibold tracking-[-.03em]">{t.panel.postReadyHud}</h2>
       </div>
-      <div className={cn("space-y-1 px-4 pb-5 pt-1 lg:block lg:px-4 lg:pb-8 lg:pt-0", !sheetExpanded && "hidden")}>
+      <div className={cn("space-y-1 px-4 pb-5 pt-1 lg:block lg:px-4 lg:pb-8 lg:pt-0", !sheetHasBody && "hidden")}>
         <section className={cn("control-card", panel !== "crop" && "hidden lg:block")}>
           <SectionHeading number="01" title={t.panel.sections.frame} mobileHidden />
           <RatioSelector item={item} />
@@ -428,6 +435,10 @@ function lookActiveClass(look: ImageSettings["look"]) {
   if (look === "deep") return "border-[#7891ae]/45 bg-[#536a83]/10 shadow-[inset_0_1px_rgba(255,255,255,.08),0_0_28px_rgba(83,106,131,.08)]";
   if (look === "night") return "border-[#3a8ca5]/45 bg-[#0a4d62]/12 shadow-[inset_0_1px_rgba(255,255,255,.08),0_0_28px_rgba(58,140,165,.08)]";
   return "border-white/35 bg-white/9";
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value));
 }
 
 function Range({

@@ -156,13 +156,13 @@ export function Workspace({ validationSet = false }: { validationSet?: boolean }
 }
 
 function MobileFilmstrip() {
-  const { images, selectedId, select, toggleExport, mobileSheetExpanded } = useLastLook();
+  const { images, selectedId, select, toggleExport, mobileSheetHeight } = useLastLook();
   const t = useI18n();
   if (images.length < 2) return null;
   return (
     <div
       className="scrollbar-none hud-panel absolute left-1/2 z-30 flex max-w-[calc(100%-32px)] -translate-x-1/2 gap-1.5 overflow-x-auto rounded-2xl p-1.5 transition-[bottom] duration-300 lg:hidden"
-      style={{ bottom: mobileSheetExpanded ? "calc(24dvh + 8px)" : "76px" }}
+      style={{ bottom: mobileSheetHeight + 8 }}
     >
       {images.map((image, index) => (
         <button

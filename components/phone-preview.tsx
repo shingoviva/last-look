@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 export function PhonePreview({ item }: { item: ImageItem }) {
   const { preview, images, selectedId, select } = useLastLook();
-  const mobileSheetExpanded = useLastLook((state) => state.mobileSheetExpanded);
+  const mobileSheetHeight = useLastLook((state) => state.mobileSheetHeight);
   const t = useI18n();
   const ratio = preview === "story" ? 9 / 16 : ratioValue(item.settings.ratio, item);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -24,11 +24,7 @@ export function PhonePreview({ item }: { item: ImageItem }) {
     const measure = () => {
       const rect = stage.getBoundingClientRect();
       const mobile = window.innerWidth < 1024;
-      const mobileSheetReserve = mobile
-        ? mobileSheetExpanded
-          ? Math.max(176, window.innerHeight * 0.24) + 14
-          : 70
-        : 32;
+      const mobileSheetReserve = mobile ? mobileSheetHeight + 14 : 32;
       const topReserve = mobile ? 56 : 0;
       setStageSize({
         width: Math.max(240, rect.width - 24),
@@ -40,10 +36,10 @@ export function PhonePreview({ item }: { item: ImageItem }) {
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [mobileSheetExpanded]);
+  }, [mobileSheetHeight]);
 
   const phoneSize = getPhoneSize(preview, ratio, stageSize);
-  const mobileBottomPad = mobileSheetExpanded ? "calc(24dvh + 18px)" : "74px";
+  const mobileBottomPad = `${mobileSheetHeight + 18}px`;
 
   return (
     <div
