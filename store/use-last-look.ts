@@ -12,6 +12,7 @@ type Store = {
   preview: PreviewContext;
   compare: CompareMode;
   mobilePanel: "crop" | "look" | "preview" | "export";
+  mobileSheetExpanded: boolean;
   setImages: (images: ImageItem[]) => void;
   addImages: (images: ImageItem[]) => void;
   select: (id: string) => void;
@@ -22,6 +23,7 @@ type Store = {
   setPreview: (preview: PreviewContext) => void;
   setCompare: (compare: CompareMode) => void;
   setMobilePanel: (panel: Store["mobilePanel"]) => void;
+  setMobileSheetExpanded: (expanded: boolean) => void;
   updateSettings: (id: string, patch: Partial<ImageSettings>) => void;
   applyToAll: (keys: (keyof ImageSettings)[]) => void;
   resetCrop: (id: string) => void;
@@ -36,6 +38,7 @@ export const useLastLook = create<Store>((set, get) => ({
   preview: "feed",
   compare: "edited",
   mobilePanel: "crop",
+  mobileSheetExpanded: true,
   setImages: (images) => set({ images, selectedId: images[0]?.id ?? null }),
   addImages: (newImages) =>
     set((state) => ({
@@ -72,7 +75,8 @@ export const useLastLook = create<Store>((set, get) => ({
     })),
   setPreview: (preview) => set({ preview }),
   setCompare: (compare) => set({ compare }),
-  setMobilePanel: (mobilePanel) => set({ mobilePanel }),
+  setMobilePanel: (mobilePanel) => set({ mobilePanel, mobileSheetExpanded: true }),
+  setMobileSheetExpanded: (mobileSheetExpanded) => set({ mobileSheetExpanded }),
   updateSettings: (id, patch) =>
     set((state) => ({
       images: state.images.map((image) =>

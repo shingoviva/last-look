@@ -2,7 +2,8 @@
 
 import * as Slider from "@radix-ui/react-slider";
 import { Check, Copy, Download, Info, LoaderCircle, PackageCheck, RotateCcw, Sparkles, WandSparkles } from "lucide-react";
-import { useEffect, useState } from "react";
+import type { PointerEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import JSZip from "jszip";
 import { LOOKS, RATIOS } from "@/lib/constants";
 import { downloadBlob, getExportSize, outputName, renderToBlob } from "@/lib/image-processing";
@@ -15,7 +16,11 @@ import { cn } from "@/lib/utils";
 
 export function ControlPanel({ item }: { item: ImageItem }) {
   const panel = useLastLook((state) => state.mobilePanel);
+  const sheetExpanded = useLastLook((state) => state.mobileSheetExpanded);
+  const setSheetExpanded = useLastLook((state) => state.setMobileSheetExpanded);
   const t = useI18n();
+  const dragStartY = useRef<number | null>(null);
+  const dragHandled = useRef(false);
   const mobileTitles = {
     crop: t.panel.titles.crop,
     look: t.panel.titles.look,
@@ -29,10 +34,46 @@ export function ControlPanel({ item }: { item: ImageItem }) {
     preview: "Original · Safe · IG Shift",
     export: `${selectedCount} ${t.common.selected}`,
   };
+  const onHandlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    dragStartY.current = event.clientY;
+    dragHandled.current = false;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const onHandlePointerUp = (event: PointerEvent<HTMLButtonElement>) => {
+    if (dragStartY.current === null) return;
+    const delta = event.clientY - dragStartY.current;
+    dragStartY.current = null;
+    if (Math.abs(delta) < 20) return;
+    dragHandled.current = true;
+    setSheetExpanded(delta < 0);
+    window.setTimeout(() => {
+      dragHandled.current = false;
+    }, 0);
+  };
   return (
-    <aside className="mobile-editor-sheet glass-panel scrollbar-none absolute inset-x-0 bottom-[54px] z-40 h-[21dvh] min-h-[156px] w-full overflow-y-auto border-white/8 lg:static lg:h-full lg:max-h-none lg:w-[348px] lg:shrink-0 lg:border-l">
+    <aside
+      className={cn(
+        "mobile-editor-sheet glass-panel scrollbar-none absolute inset-x-0 bottom-[54px] z-40 w-full border-white/8 transition-all duration-300 ease-out lg:static lg:h-full lg:max-h-none lg:w-[348px] lg:shrink-0 lg:overflow-y-auto lg:border-l",
+        sheetExpanded
+          ? "h-[24dvh] min-h-[176px] overflow-y-auto"
+          : "h-[58px] min-h-[58px] overflow-hidden",
+      )}
+    >
       <div className="sticky top-0 z-20 border-b border-white/7 bg-[#101010]/78 px-4 pb-2 pt-1.5 backdrop-blur-2xl lg:hidden">
-        <div className="mx-auto mb-2 h-1 w-9 rounded-full bg-white/20" />
+        <button
+          type="button"
+          aria-label={sheetExpanded ? "Hide controls and show the photo" : "Show controls"}
+          aria-expanded={sheetExpanded}
+          onPointerDown={onHandlePointerDown}
+          onPointerUp={onHandlePointerUp}
+          onClick={() => {
+            if (dragHandled.current) return;
+            setSheetExpanded(!sheetExpanded);
+          }}
+          className="mx-auto mb-2 flex h-5 w-28 touch-none items-center justify-center rounded-full text-white/45"
+        >
+          <span className="h-1 w-10 rounded-full bg-white/24" />
+        </button>
         <div className="flex items-center justify-between">
           <div>
             <p className="eyebrow mb-1 hidden sm:block">{t.panel.hud}</p>
@@ -53,7 +94,7 @@ export function ControlPanel({ item }: { item: ImageItem }) {
         <p className="eyebrow">{t.panel.finalAdjustments}</p>
         <h2 className="mt-1 text-sm font-semibold tracking-[-.03em]">{t.panel.postReadyHud}</h2>
       </div>
-      <div className="space-y-1 px-4 pb-5 pt-1 lg:px-4 lg:pb-8 lg:pt-0">
+      <div className={cn("space-y-1 px-4 pb-5 pt-1 lg:block lg:px-4 lg:pb-8 lg:pt-0", !sheetExpanded && "hidden")}>
         <section className={cn("control-card", panel !== "crop" && "hidden lg:block")}>
           <SectionHeading number="01" title={t.panel.sections.frame} mobileHidden />
           <RatioSelector item={item} />

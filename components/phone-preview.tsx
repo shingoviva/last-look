@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 
 export function PhonePreview({ item }: { item: ImageItem }) {
   const { preview, images, selectedId, select } = useLastLook();
+  const mobileSheetExpanded = useLastLook((state) => state.mobileSheetExpanded);
   const t = useI18n();
   const ratio = preview === "story" ? 9 / 16 : ratioValue(item.settings.ratio, item);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -23,9 +24,15 @@ export function PhonePreview({ item }: { item: ImageItem }) {
     const measure = () => {
       const rect = stage.getBoundingClientRect();
       const mobile = window.innerWidth < 1024;
+      const mobileSheetReserve = mobile
+        ? mobileSheetExpanded
+          ? Math.max(176, window.innerHeight * 0.24) + 14
+          : 70
+        : 32;
+      const topReserve = mobile ? 56 : 0;
       setStageSize({
         width: Math.max(240, rect.width - 24),
-        height: mobile ? Math.max(360, rect.height * 0.86 - 8) : Math.max(360, rect.height - 32),
+        height: mobile ? Math.max(300, rect.height - mobileSheetReserve - topReserve) : Math.max(360, rect.height - 32),
         mobile,
       });
     };
@@ -33,14 +40,16 @@ export function PhonePreview({ item }: { item: ImageItem }) {
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, []);
+  }, [mobileSheetExpanded]);
 
   const phoneSize = getPhoneSize(preview, ratio, stageSize);
+  const mobileBottomPad = mobileSheetExpanded ? "calc(24dvh + 18px)" : "74px";
 
   return (
     <div
       ref={stageRef}
-      className="relative flex h-full min-h-0 w-full items-start justify-center overflow-hidden px-2 pb-[21dvh] pt-12 sm:px-8 lg:items-center lg:py-6"
+      style={{ paddingBottom: stageSize.mobile ? mobileBottomPad : undefined }}
+      className="relative flex h-full min-h-0 w-full items-start justify-center overflow-hidden px-2 pb-[74px] pt-12 sm:px-8 lg:items-center lg:py-6"
     >
       <div className="preview-glow" />
       <div className="hud-panel absolute left-4 top-[52px] z-20 hidden max-w-[210px] rounded-[10px] px-3 py-2 lg:block">
@@ -113,7 +122,7 @@ function FeedPreview({ item, ratio, carousel }: { item: ImageItem; ratio: number
         <span className="tracking-[.26em] text-stone-500">LAST LOOK</span>
         <span>● ◒</span>
       </div>
-      <div className="absolute inset-x-0 top-0 z-20 flex h-12 items-center gap-2.5 bg-gradient-to-b from-black/70 to-transparent px-3 pb-2 lg:static lg:h-11 lg:shrink-0 lg:bg-none lg:pb-0">
+      <div className="z-20 flex h-11 shrink-0 items-center gap-2.5 border-b border-white/8 bg-[#101010] px-3 lg:h-11 lg:border-b-0 lg:bg-transparent">
         <span className="size-7 rounded-full bg-gradient-to-br from-stone-500 to-stone-800" />
         <div className="flex-1">
           <p className="text-[11px] font-semibold">your.archive</p>
@@ -189,7 +198,7 @@ function getPhoneSize(
     return { width, height: width * (16 / 9) };
   }
 
-  const feedChromeHeight = stage.mobile ? 0 : 148;
+  const feedChromeHeight = stage.mobile ? 44 : 148;
   const maxContentWidthByHeight = Math.max(180, (stage.height - feedChromeHeight - outerPadding) * ratio);
   const contentWidth = Math.min(maxOuterWidth - outerPadding, maxContentWidthByHeight);
   return {
