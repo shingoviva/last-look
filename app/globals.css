@@ -10,7 +10,10 @@
 }
 
 * { box-sizing: border-box; }
-html { background: var(--background); }
+html {
+  background: var(--background);
+  overscroll-behavior: none;
+}
 body {
   margin: 0;
   background:
@@ -20,6 +23,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "ss01", "cv02", "cv03";
+  overscroll-behavior: none;
 }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
@@ -173,6 +177,12 @@ h1, h2, h3 {
 }
 .scrollbar-none { scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+.crop-touch-target {
+  touch-action: none;
+  overscroll-behavior: contain;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
 
 @media (max-width: 1023px) {
   body {
