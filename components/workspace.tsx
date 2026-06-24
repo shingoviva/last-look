@@ -144,7 +144,6 @@ export function Workspace({ validationSet = false }: { validationSet?: boolean }
           <section className="hairline-grid absolute inset-0 bottom-[68px] overflow-hidden lg:static lg:min-h-0 lg:flex-1 lg:border-b-0">
             <PreviewToolbar />
             <PhonePreview item={item} />
-            <MobileFilmstrip />
           </section>
           <ControlPanel item={item} />
           <MobileBar />
@@ -152,44 +151,5 @@ export function Workspace({ validationSet = false }: { validationSet?: boolean }
       )}
       <HelpModal open={helpOpen} onClose={() => setHelpOpen(false)} />
     </main>
-  );
-}
-
-function MobileFilmstrip() {
-  const { images, selectedId, select, toggleExport, mobileSheetHeight } = useLastLook();
-  const t = useI18n();
-  if (images.length < 2) return null;
-  return (
-    <div
-      className="scrollbar-none hud-panel absolute left-1/2 z-30 flex max-w-[calc(100%-32px)] -translate-x-1/2 gap-1.5 overflow-x-auto rounded-2xl p-1.5 transition-[bottom] duration-300 lg:hidden"
-      style={{ bottom: mobileSheetHeight + 8 }}
-    >
-      {images.map((image, index) => (
-        <button
-          key={image.id}
-          onClick={() => select(image.id)}
-          className={`relative h-11 w-9 shrink-0 overflow-hidden rounded-lg border transition ${
-            selectedId === image.id ? "border-white/80 opacity-100" : "border-white/10 opacity-55"
-          }`}
-        >
-          {/* Local blob previews intentionally bypass image optimization. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={image.url} alt="" className="size-full object-cover" />
-          <span className="absolute left-1 top-1 rounded bg-black/65 px-1 text-[8px]">{index + 1}</span>
-          <span
-            role="checkbox"
-            aria-checked={image.exportEnabled}
-            onClick={(event) => {
-              event.stopPropagation();
-              toggleExport(image.id);
-            }}
-            className={`absolute bottom-1 right-1 size-3.5 rounded border ${
-              image.exportEnabled ? "border-[#8fe9ff] bg-[#8fe9ff]" : "border-white/40 bg-black/55"
-            }`}
-            aria-label={`${image.exportEnabled ? t.library.exclude : t.library.include} ${image.name}`}
-          />
-        </button>
-      ))}
-    </div>
   );
 }

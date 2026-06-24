@@ -24,6 +24,7 @@ const checks: [string, boolean, string][] = [
     JSON.stringify(EXPORT_SIZES),
   ],
   ["Default ratio is current Instagram 3:4", DEFAULT_SETTINGS.ratio === "3:4", DEFAULT_SETTINGS.ratio],
+  ["Default fit is Crop to Fill", DEFAULT_SETTINGS.fitMode === "crop", DEFAULT_SETTINGS.fitMode],
   ["Default look is Original", DEFAULT_SETTINGS.look === "none", DEFAULT_SETTINGS.look],
   ["Safe Fix is off by default", DEFAULT_SETTINGS.safeGuard === false, String(DEFAULT_SETTINGS.safeGuard)],
   ["3:4 ratio value is exact", ratioValue("3:4") === 0.75, String(ratioValue("3:4"))],

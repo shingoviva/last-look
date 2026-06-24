@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { DEFAULT_SETTINGS } from "@/lib/constants";
 import type { Locale } from "@/lib/i18n";
-import type { CompareMode, ImageItem, ImageSettings, PreviewContext } from "@/lib/types";
+import type { CompareMode, ImageItem, ImageSettings, PreviewContext, RatioKey } from "@/lib/types";
 
 type Store = {
   locale: Locale;
@@ -24,6 +24,7 @@ type Store = {
   setCompare: (compare: CompareMode) => void;
   setMobilePanel: (panel: Store["mobilePanel"]) => void;
   setMobileSheetHeight: (height: number) => void;
+  setSharedRatio: (ratio: RatioKey) => void;
   updateSettings: (id: string, patch: Partial<ImageSettings>) => void;
   applyToAll: (keys: (keyof ImageSettings)[]) => void;
   resetCrop: (id: string) => void;
@@ -41,10 +42,25 @@ export const useLastLook = create<Store>((set, get) => ({
   mobileSheetHeight: 190,
   setImages: (images) => set({ images, selectedId: images[0]?.id ?? null }),
   addImages: (newImages) =>
-    set((state) => ({
-      images: [...state.images, ...newImages],
-      selectedId: state.selectedId ?? newImages[0]?.id ?? null,
-    })),
+    set((state) => {
+      const sharedRatio = state.images.find((image) => image.id === state.selectedId)?.settings.ratio ?? state.images[0]?.settings.ratio;
+      const imagesToAdd = sharedRatio
+        ? newImages.map((image) => ({
+            ...image,
+            settings: {
+              ...image.settings,
+              ratio: sharedRatio,
+              zoom: 1,
+              x: 0,
+              y: 0,
+            },
+          }))
+        : newImages;
+      return {
+        images: [...state.images, ...imagesToAdd],
+        selectedId: state.selectedId ?? imagesToAdd[0]?.id ?? null,
+      };
+    }),
   select: (selectedId) => set({ selectedId }),
   remove: (id) =>
     set((state) => {
@@ -78,6 +94,19 @@ export const useLastLook = create<Store>((set, get) => ({
   setMobilePanel: (mobilePanel) =>
     set((state) => ({ mobilePanel, mobileSheetHeight: Math.max(state.mobileSheetHeight, 190) })),
   setMobileSheetHeight: (mobileSheetHeight) => set({ mobileSheetHeight }),
+  setSharedRatio: (ratio) =>
+    set((state) => ({
+      images: state.images.map((image) => ({
+        ...image,
+        settings: {
+          ...image.settings,
+          ratio,
+          zoom: 1,
+          x: 0,
+          y: 0,
+        },
+      })),
+    })),
   updateSettings: (id, patch) =>
     set((state) => ({
       images: state.images.map((image) =>

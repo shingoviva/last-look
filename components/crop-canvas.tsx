@@ -208,8 +208,7 @@ export function CropCanvas({
         ref={canvasRef}
         width={pixelWidth}
         height={pixelHeight}
-        style={{ width: `${frameSize.width}px`, height: `${frameSize.height}px` }}
-        className="absolute inset-0 block max-h-none max-w-none"
+        className="absolute inset-0 block size-full max-h-none max-w-none"
         aria-label={`Preview of ${item.name}`}
       />
       {!ready && <div className="absolute inset-0 animate-pulse bg-stone-900" />}

@@ -14,6 +14,7 @@ export function PhonePreview({ item }: { item: ImageItem }) {
   const { preview, images, selectedId, select } = useLastLook();
   const mobileSheetHeight = useLastLook((state) => state.mobileSheetHeight);
   const t = useI18n();
+  const hasMobileRail = images.length > 1;
   const ratio = preview === "story" ? 9 / 16 : ratioValue(item.settings.ratio, item);
   const stageRef = useRef<HTMLDivElement>(null);
   const [stageSize, setStageSize] = useState({ width: 370, height: 700, mobile: false });
@@ -26,8 +27,9 @@ export function PhonePreview({ item }: { item: ImageItem }) {
       const mobile = window.innerWidth < 1024;
       const mobileSheetReserve = mobile ? mobileSheetHeight + 14 : 32;
       const topReserve = mobile ? 56 : 0;
+      const railReserve = mobile && hasMobileRail ? 104 : 0;
       setStageSize({
-        width: Math.max(240, rect.width - 24),
+        width: Math.max(220, rect.width - 24 - railReserve),
         height: mobile ? Math.max(300, rect.height - mobileSheetReserve - topReserve) : Math.max(360, rect.height - 32),
         mobile,
       });
@@ -36,7 +38,7 @@ export function PhonePreview({ item }: { item: ImageItem }) {
     const observer = new ResizeObserver(measure);
     observer.observe(stage);
     return () => observer.disconnect();
-  }, [mobileSheetHeight]);
+  }, [hasMobileRail, mobileSheetHeight]);
 
   const phoneSize = getPhoneSize(preview, ratio, stageSize);
   const mobileBottomPad = `${mobileSheetHeight + 18}px`;
@@ -54,38 +56,41 @@ export function PhonePreview({ item }: { item: ImageItem }) {
           {t.preview.outputCopy}
         </p>
       </div>
-      <motion.div
-        layout
-        style={{ width: phoneSize.width, height: phoneSize.height }}
-        className={cn(
-          "relative z-10 flex shrink-0 flex-col overflow-hidden border-0 bg-transparent shadow-[0_30px_80px_rgba(0,0,0,.5)] lg:border lg:border-white/10 lg:bg-[#080808] lg:shadow-[0_50px_120px_rgba(0,0,0,.75)]",
-          preview === "story"
-            ? "aspect-[9/19] rounded-[18px] p-0 lg:rounded-[2.9rem] lg:p-2"
-            : "rounded-[18px] p-0 lg:rounded-[2.5rem] lg:p-2",
-        )}
-      >
-        <div className="absolute left-1/2 top-3 z-30 hidden h-5 w-24 -translate-x-1/2 rounded-full bg-black lg:block" />
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${preview}-${selectedId}-${item.settings.ratio}`}
-            initial={{ opacity: 0, scale: 0.985 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="scanline relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] bg-[#121212] lg:rounded-[2.05rem]"
-          >
-            {preview === "grid" ? (
-              <GridPreview item={item} images={images} />
-            ) : preview === "story" ? (
-              <StoryPreview item={item} />
-            ) : (
-              <FeedPreview item={item} ratio={ratio} carousel={preview === "carousel"} />
-            )}
-          </motion.div>
-        </AnimatePresence>
-      </motion.div>
+      <div className="relative z-10 shrink-0">
+        <motion.div
+          layout
+          style={{ width: phoneSize.width, height: phoneSize.height }}
+          className={cn(
+            "relative flex shrink-0 flex-col overflow-hidden border-0 bg-transparent shadow-[0_30px_80px_rgba(0,0,0,.5)] lg:border lg:border-white/10 lg:bg-[#080808] lg:shadow-[0_50px_120px_rgba(0,0,0,.75)]",
+            preview === "story"
+              ? "aspect-[9/19] rounded-[18px] p-0 lg:rounded-[2.9rem] lg:p-2"
+              : "rounded-[18px] p-0 lg:rounded-[2.5rem] lg:p-2",
+          )}
+        >
+          <div className="absolute left-1/2 top-3 z-30 hidden h-5 w-24 -translate-x-1/2 rounded-full bg-black lg:block" />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${preview}-${selectedId}-${item.settings.ratio}-${item.settings.fitMode}`}
+              initial={{ opacity: 0, scale: 0.985 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="scanline relative flex h-full min-h-0 flex-col overflow-hidden rounded-[18px] bg-[#121212] lg:rounded-[2.05rem]"
+            >
+              {preview === "grid" ? (
+                <GridPreview item={item} images={images} />
+              ) : preview === "story" ? (
+                <StoryPreview item={item} />
+              ) : (
+                <FeedPreview item={item} ratio={ratio} carousel={preview === "carousel"} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
+        <MobileThumbnailRail phoneHeight={phoneSize.height} />
+      </div>
       {preview === "carousel" && images.length > 1 && (
-        <div className="absolute bottom-7 z-20 flex gap-1.5">
+        <div className="absolute bottom-7 z-20 hidden gap-1.5 lg:flex">
           {images.map((image) => (
             <button
               key={image.id}
@@ -99,6 +104,47 @@ export function PhonePreview({ item }: { item: ImageItem }) {
       <div className="pointer-events-none absolute bottom-6 left-1/2 z-20 hidden -translate-x-1/2 rounded-full border border-white/8 bg-black/35 px-3 py-1.5 text-[8px] uppercase tracking-[.18em] text-white/38 backdrop-blur-xl lg:block">
         {t.preview.safeNotShift}
       </div>
+    </div>
+  );
+}
+
+function MobileThumbnailRail({ phoneHeight }: { phoneHeight: number }) {
+  const { images, selectedId, select, toggleExport } = useLastLook();
+  const t = useI18n();
+  if (images.length < 2) return null;
+  return (
+    <div
+      className="scrollbar-none hud-panel absolute left-full top-1/2 z-20 ml-2 flex w-11 -translate-y-1/2 flex-col gap-1.5 overflow-y-auto rounded-2xl p-1.5 lg:hidden"
+      style={{ maxHeight: Math.max(128, Math.min(phoneHeight, 420)) }}
+    >
+      {images.map((image, index) => (
+        <button
+          key={image.id}
+          onClick={() => select(image.id)}
+          className={cn(
+            "relative h-12 w-8 shrink-0 overflow-hidden rounded-lg border transition",
+            selectedId === image.id ? "border-white/80 opacity-100" : "border-white/10 opacity-55",
+          )}
+        >
+          {/* Local blob previews intentionally bypass image optimization. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={image.url} alt="" className="size-full object-cover" />
+          <span className="absolute left-1 top-1 rounded bg-black/65 px-1 text-[8px]">{index + 1}</span>
+          <span
+            role="checkbox"
+            aria-checked={image.exportEnabled}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleExport(image.id);
+            }}
+            className={cn(
+              "absolute bottom-1 right-1 size-3.5 rounded border",
+              image.exportEnabled ? "border-[#8fe9ff] bg-[#8fe9ff]" : "border-white/40 bg-black/55",
+            )}
+            aria-label={`${image.exportEnabled ? t.library.exclude : t.library.include} ${image.name}`}
+          />
+        </button>
+      ))}
     </div>
   );
 }

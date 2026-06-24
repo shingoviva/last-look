@@ -22,6 +22,10 @@ export function ControlPanel({ item }: { item: ImageItem }) {
   const dragStartY = useRef<number | null>(null);
   const dragStartHeight = useRef(0);
   const [dragging, setDragging] = useState(false);
+  const minSheetHeight = 86;
+  const maxSheetHeight = typeof window === "undefined" ? 520 : Math.max(260, Math.min(window.innerHeight * 0.76, window.innerHeight - 112));
+  const visibleSheetHeight = Math.round(clamp(sheetHeight, minSheetHeight, maxSheetHeight));
+  const sheetHasBody = visibleSheetHeight > 126;
   const mobileTitles = {
     crop: t.panel.titles.crop,
     look: t.panel.titles.look,
@@ -35,26 +39,40 @@ export function ControlPanel({ item }: { item: ImageItem }) {
     preview: "Original · Safe · IG Shift",
     export: `${selectedCount} ${t.common.selected}`,
   };
-  const minSheetHeight = 58;
-  const maxSheetHeight = typeof window === "undefined" ? 520 : Math.max(240, Math.min(window.innerHeight * 0.72, window.innerHeight - 132));
-  const visibleSheetHeight = Math.round(clamp(sheetHeight, minSheetHeight, maxSheetHeight));
-  const sheetHasBody = visibleSheetHeight > 104;
+  useEffect(() => {
+    if (!dragging) return;
+    const onPointerMove = (event: globalThis.PointerEvent) => {
+      if (dragStartY.current === null) return;
+      event.preventDefault();
+      const delta = event.clientY - dragStartY.current;
+      setSheetHeight(clamp(dragStartHeight.current - delta, minSheetHeight, maxSheetHeight));
+    };
+    const stopDragging = () => {
+      dragStartY.current = null;
+      setDragging(false);
+      document.body.style.userSelect = "";
+      document.body.style.touchAction = "";
+    };
+    document.body.style.userSelect = "none";
+    document.body.style.touchAction = "none";
+    window.addEventListener("pointermove", onPointerMove, { passive: false });
+    window.addEventListener("pointerup", stopDragging);
+    window.addEventListener("pointercancel", stopDragging);
+    return () => {
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerup", stopDragging);
+      window.removeEventListener("pointercancel", stopDragging);
+      document.body.style.userSelect = "";
+      document.body.style.touchAction = "";
+    };
+  }, [dragging, maxSheetHeight, setSheetHeight]);
+
   const onHandlePointerDown = (event: PointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     dragStartY.current = event.clientY;
     dragStartHeight.current = visibleSheetHeight;
     setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-  };
-  const onHandlePointerMove = (event: PointerEvent<HTMLButtonElement>) => {
-    if (dragStartY.current === null) return;
-    const delta = event.clientY - dragStartY.current;
-    setSheetHeight(clamp(dragStartHeight.current - delta, minSheetHeight, maxSheetHeight));
-  };
-  const onHandlePointerUp = (event: PointerEvent<HTMLButtonElement>) => {
-    if (dragStartY.current === null) return;
-    dragStartY.current = null;
-    setDragging(false);
-    event.currentTarget.releasePointerCapture(event.pointerId);
   };
   return (
     <aside
@@ -71,15 +89,9 @@ export function ControlPanel({ item }: { item: ImageItem }) {
           aria-label="Resize controls"
           title="Drag to resize controls"
           onPointerDown={onHandlePointerDown}
-          onPointerMove={onHandlePointerMove}
-          onPointerUp={onHandlePointerUp}
-          onPointerCancel={() => {
-            dragStartY.current = null;
-            setDragging(false);
-          }}
-          className="mx-auto mb-2 flex h-5 w-32 touch-none cursor-ns-resize items-center justify-center rounded-full text-white/45"
+          className="mx-auto mb-1 flex h-8 w-full touch-none cursor-ns-resize items-center justify-center rounded-full text-white/45"
         >
-          <span className="h-1 w-10 rounded-full bg-white/24" />
+          <span className="h-1.5 w-12 rounded-full bg-white/28 shadow-[0_0_18px_rgba(255,255,255,.08)]" />
         </button>
         <div className="flex items-center justify-between">
           <div>
@@ -399,14 +411,7 @@ function RatioSelector({ item }: { item: ImageItem }) {
           <button
             key={ratio.key}
             title={ratio.label}
-            onClick={() =>
-              useLastLook.getState().updateSettings(item.id, {
-                ratio: ratio.key,
-                zoom: 1,
-                x: 0,
-                y: 0,
-              })
-            }
+            onClick={() => useLastLook.getState().setSharedRatio(ratio.key)}
             className={cn(
               "flex h-9 min-w-[78px] flex-col items-center justify-center rounded-[7px] border text-[10px] font-semibold transition lg:h-11 lg:min-w-0",
               item.settings.ratio === ratio.key
