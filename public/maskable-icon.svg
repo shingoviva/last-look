@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LAST LOOK maskable app icon">
+  <rect width="512" height="512" fill="#050505"/>
+  <circle cx="256" cy="256" r="228" fill="#071215"/>
+  <rect x="116" y="96" width="280" height="320" rx="60" fill="none" stroke="#8fe9ff" stroke-width="22"/>
+  <path d="M184 158v196h143" fill="none" stroke="#fff6e8" stroke-width="48" stroke-linecap="square" stroke-linejoin="miter"/>
+  <circle cx="348" cy="151" r="25" fill="#8fe9ff"/>
+</svg>

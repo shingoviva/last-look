@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="LAST LOOK app icon">
+  <defs>
+    <radialGradient id="shine" cx="32%" cy="18%" r="70%">
+      <stop stop-color="#363636"/>
+      <stop offset=".42" stop-color="#0b0b0b"/>
+      <stop offset="1" stop-color="#02090b"/>
+    </radialGradient>
+    <linearGradient id="frame" x1="104" y1="72" x2="410" y2="436" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff8eb"/>
+      <stop offset=".42" stop-color="#8fe9ff"/>
+      <stop offset="1" stop-color="#184f63"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="11" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="0 0 0 0 0.56 0 0 0 0 0.91 0 0 0 0 1 0 0 0 .55 0"/>
+      <feBlend in="SourceGraphic"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#shine)"/>
+  <path d="M87 338c91 31 211 30 338-19v105c-81 31-223 28-338-11z" fill="#8fe9ff" opacity=".08"/>
+  <rect x="102" y="92" width="308" height="328" rx="58" fill="none" stroke="url(#frame)" stroke-width="21" filter="url(#glow)"/>
+  <path d="M174 153v206h151" fill="none" stroke="#fff6e8" stroke-width="48" stroke-linecap="square" stroke-linejoin="miter"/>
+  <path d="M350 148a26 26 0 1 1 0 52a26 26 0 0 1 0-52z" fill="#8fe9ff"/>
+  <path d="M124 109h264" stroke="#ffffff" stroke-opacity=".24" stroke-width="4" stroke-linecap="round"/>
+</svg>
