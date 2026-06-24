@@ -2,8 +2,8 @@ import type { ImageSettings, LookKey, RatioKey } from "./types";
 
 export const DEFAULT_SETTINGS: ImageSettings = {
   ratio: "3:4",
-  fitMode: "crop",
-  padding: "white",
+  fitMode: "fit",
+  padding: "black",
   look: "none",
   strength: 70,
   safeGuard: false,

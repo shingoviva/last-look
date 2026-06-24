@@ -25,7 +25,7 @@ export function PhonePreview({ item }: { item: ImageItem }) {
       const mobile = window.innerWidth < 1024;
       setStageSize({
         width: Math.max(240, rect.width - 24),
-        height: mobile ? Math.max(280, rect.height * 0.62 - 12) : Math.max(360, rect.height - 32),
+        height: mobile ? Math.max(360, rect.height * 0.86 - 8) : Math.max(360, rect.height - 32),
         mobile,
       });
     };
@@ -40,7 +40,7 @@ export function PhonePreview({ item }: { item: ImageItem }) {
   return (
     <div
       ref={stageRef}
-      className="relative flex h-full min-h-0 w-full items-start justify-center overflow-hidden px-3 pb-[38dvh] pt-12 sm:px-8 lg:items-center lg:py-6"
+      className="relative flex h-full min-h-0 w-full items-start justify-center overflow-hidden px-2 pb-[21dvh] pt-12 sm:px-8 lg:items-center lg:py-6"
     >
       <div className="preview-glow" />
       <div className="hud-panel absolute left-4 top-[52px] z-20 hidden max-w-[210px] rounded-[10px] px-3 py-2 lg:block">
@@ -176,7 +176,7 @@ function getPhoneSize(
   stage: { width: number; height: number; mobile: boolean },
 ) {
   const outerPadding = stage.mobile ? 0 : 16;
-  const maxOuterWidth = Math.min(370, stage.width);
+  const maxOuterWidth = Math.min(stage.mobile ? 430 : 370, stage.width);
 
   if (preview === "story") {
     const width = Math.min(maxOuterWidth, stage.height * (9 / 19));

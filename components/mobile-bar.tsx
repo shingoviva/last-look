@@ -23,16 +23,16 @@ export function MobileBar() {
     multiple: true,
   });
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 grid h-[68px] grid-cols-5 items-center gap-1 border-t border-white/10 bg-[#070707]/92 px-2 pb-[max(4px,env(safe-area-inset-bottom))] shadow-[0_-20px_50px_rgba(0,0,0,.35)] backdrop-blur-2xl lg:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-50 grid h-[54px] grid-cols-5 items-center gap-1 border-t border-white/10 bg-[#070707]/84 px-2 pb-[max(3px,env(safe-area-inset-bottom))] shadow-[0_-14px_36px_rgba(0,0,0,.28)] backdrop-blur-2xl lg:hidden">
       <div
         {...getRootProps()}
         role="button"
         tabIndex={0}
         aria-label={t.mobile.import}
-        className="flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[9px] text-white/38 transition hover:text-white"
+        className="flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[8px] text-white/38 transition hover:text-white"
       >
         <input {...getInputProps()} />
-        <ImagePlus className="size-4" />
+        <ImagePlus className="size-3.5" />
         {t.mobile.import}
       </div>
       {ITEMS.map(({ key, label, icon: Icon }) => (
@@ -40,7 +40,7 @@ export function MobileBar() {
           key={key}
           onClick={() => setMobilePanel(key)}
           className={cn(
-            "relative flex min-w-0 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[9px] transition",
+            "relative flex min-w-0 flex-col items-center gap-0.5 rounded-xl px-1 py-1.5 text-[8px] transition",
             mobilePanel === key
               ? key === "export"
                 ? "bg-[#8fe9ff] text-black shadow-[0_8px_24px_rgba(143,233,255,.24)]"
@@ -49,7 +49,7 @@ export function MobileBar() {
           )}
         >
           {mobilePanel === key && key !== "export" && <span className="absolute -top-1 h-0.5 w-5 rounded-full bg-[#8fe9ff]" />}
-          <Icon className="size-4" />
+          <Icon className="size-3.5" />
           {t.mobile[key] ?? label}
         </button>
       ))}
