@@ -179,8 +179,9 @@ function getPhoneSize(
   const maxOuterWidth = Math.min(stage.mobile ? 430 : 370, stage.width);
 
   if (preview === "story") {
-    const width = Math.min(maxOuterWidth, stage.height * (9 / 19));
-    return { width, height: width * (19 / 9) };
+    const storyChromeHeight = stage.mobile ? 0 : 76;
+    const width = Math.min(maxOuterWidth, (stage.height - storyChromeHeight) * (9 / 16));
+    return { width, height: width * (16 / 9) + storyChromeHeight };
   }
 
   if (preview === "grid") {

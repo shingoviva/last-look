@@ -26,9 +26,9 @@ export function transformLookPixel(
         : nightBlack(pixel, hue, saturation, luma, skin);
 
   return [
-    clamp01(mix(originalR, lookPixel[0], amount)),
-    clamp01(mix(originalG, lookPixel[1], amount)),
-    clamp01(mix(originalB, lookPixel[2], amount)),
+    limitOutputChannel(mix(originalR, lookPixel[0], amount)),
+    limitOutputChannel(mix(originalG, lookPixel[1], amount)),
+    limitOutputChannel(mix(originalB, lookPixel[2], amount)),
   ];
 }
 
@@ -47,11 +47,11 @@ function softClassic(
   const mid = Math.sin(Math.PI * clamp01(luma));
   const highlight = Math.pow(luma, 3.2);
   const tone = filmTone(luma, {
-    toe: 0.092,
+    toe: 0.118,
     toePivot: 0.33,
-    midContrast: -0.035,
-    shoulder: 0.032,
-    whiteSoftness: 0.018,
+    midContrast: -0.055,
+    shoulder: 0.042,
+    whiteSoftness: 0.026,
   });
   const toned = applyLuma(pixel, tone);
   let [r, g, b] = toned;
@@ -61,30 +61,30 @@ function softClassic(
   const green = hueBell(hue, 0.31, 0.12);
   const blue = hueBell(hue, 0.62, 0.13);
   const saturationScale =
-    0.92 -
-    green * 0.12 -
-    blue * 0.07 -
-    red * 0.035 +
-    skin * 0.12 +
-    yellow * 0.035;
+    0.86 -
+    green * 0.18 -
+    blue * 0.11 -
+    red * 0.055 +
+    skin * 0.18 +
+    yellow * 0.055;
   [r, g, b] = applySaturation([r, g, b], saturationScale);
 
-  r += 0.038 * mid + 0.012 * yellow - 0.012 * green;
-  g += 0.006 * mid + 0.01 * yellow - 0.004 * blue;
-  b -= 0.032 * mid + 0.012 * yellow - 0.006 * shadow;
+  r += 0.064 * mid + 0.018 * yellow - 0.018 * green;
+  g += 0.012 * mid + 0.014 * yellow - 0.006 * blue;
+  b -= 0.052 * mid + 0.018 * yellow - 0.01 * shadow;
 
   // Preserve believable skin: warm but not orange, lifted but not waxy.
   if (skin > 0) {
     const skinTone = applyLuma(pixel, mix(luma, luma + 0.012, skin));
-    r = mix(r, skinTone[0] + 0.014, skin * 0.58);
-    g = mix(g, skinTone[1] + 0.004, skin * 0.42);
-    b = mix(b, skinTone[2] - 0.008, skin * 0.52);
+    r = mix(r, skinTone[0] + 0.02, skin * 0.52);
+    g = mix(g, skinTone[1] + 0.006, skin * 0.38);
+    b = mix(b, skinTone[2] - 0.012, skin * 0.46);
   }
 
   // Soft Classic should feel airy, not flat: keep a thin highlight glow.
-  r += 0.012 * highlight;
-  g += 0.006 * highlight;
-  b += 0.002 * highlight;
+  r += 0.018 * highlight;
+  g += 0.01 * highlight;
+  b += 0.004 * highlight;
 
   return softClip([r, g, b], saturation);
 }
@@ -100,38 +100,38 @@ function deepClassic(
   const lowerMid = Math.exp(-Math.pow((luma - 0.42) / 0.24, 2));
   const highlight = Math.pow(luma, 2.9);
   const tone = filmTone(luma, {
-    toe: -0.045,
+    toe: -0.072,
     toePivot: 0.24,
-    midContrast: 0.145,
-    shoulder: 0.055,
-    whiteSoftness: 0.035,
-  }) - 0.026 * lowerMid;
+    midContrast: 0.205,
+    shoulder: 0.072,
+    whiteSoftness: 0.046,
+  }) - 0.04 * lowerMid;
   let [r, g, b] = applyLuma(pixel, tone);
 
   const red = hueBell(hue, 0.0, 0.065) + hueBell(hue, 0.985, 0.04);
   const yellow = hueBell(hue, 0.13, 0.08);
   const green = hueBell(hue, 0.33, 0.13);
   const blue = hueBell(hue, 0.62, 0.14);
-  const saturationScale = 0.75 - green * 0.16 - blue * 0.12 - red * 0.045 + yellow * 0.035 + skin * 0.12;
+  const saturationScale = 0.64 - green * 0.22 - blue * 0.18 - red * 0.07 + yellow * 0.05 + skin * 0.18;
   [r, g, b] = applySaturation([r, g, b], saturationScale);
 
   // Dense Leica-like color: cool black point, slightly warm upper mids.
-  r += -0.032 * shadow + 0.026 * highlight + 0.012 * yellow;
-  g += 0.004 * shadow + 0.006 * highlight + 0.004 * yellow - 0.008 * green;
-  b += 0.058 * shadow - 0.024 * highlight + 0.012 * blue;
+  r += -0.052 * shadow + 0.04 * highlight + 0.018 * yellow;
+  g += 0.006 * shadow + 0.01 * highlight + 0.006 * yellow - 0.014 * green;
+  b += 0.088 * shadow - 0.038 * highlight + 0.02 * blue;
 
   // Classic reds are rich but controlled, avoiding digital neon.
   if (red > 0.05) {
     const l = pixelLuma([r, g, b]);
-    r = mix(r, l + (r - l) * 0.86, red * 0.6);
-    g -= 0.006 * red;
+    r = mix(r, l + (r - l) * 0.78, red * 0.65);
+    g -= 0.01 * red;
   }
 
   if (skin > 0) {
     const protectedTone = applyLuma(pixel, mix(luma, luma - 0.006, 0.35));
-    r = mix(r, protectedTone[0] + 0.006, skin * 0.58);
-    g = mix(g, protectedTone[1], skin * 0.48);
-    b = mix(b, protectedTone[2] - 0.008, skin * 0.5);
+    r = mix(r, protectedTone[0] + 0.008, skin * 0.52);
+    g = mix(g, protectedTone[1], skin * 0.42);
+    b = mix(b, protectedTone[2] - 0.01, skin * 0.45);
   }
 
   return softClip([r, g, b], saturation);
@@ -149,38 +149,38 @@ function nightBlack(
   const mid = Math.sin(Math.PI * clamp01(luma));
   const highlight = Math.pow(luma, 3.35);
   const tone = filmTone(luma, {
-    toe: -0.075,
+    toe: -0.105,
     toePivot: 0.28,
-    midContrast: 0.085,
-    shoulder: 0.072,
-    whiteSoftness: 0.048,
-  }) - 0.022 * deepShadow;
+    midContrast: 0.14,
+    shoulder: 0.096,
+    whiteSoftness: 0.066,
+  }) - 0.038 * deepShadow;
   let [r, g, b] = applyLuma(pixel, tone);
 
   const red = hueBell(hue, 0.0, 0.07) + hueBell(hue, 0.985, 0.04);
   const yellow = hueBell(hue, 0.12, 0.09);
   const green = hueBell(hue, 0.34, 0.13);
   const blue = hueBell(hue, 0.62, 0.16);
-  const saturationScale = 0.72 - green * 0.08 - blue * 0.06 + yellow * 0.08 + red * 0.03 + skin * 0.16;
+  const saturationScale = 0.64 - green * 0.12 - blue * 0.09 + yellow * 0.13 + red * 0.055 + skin * 0.2;
   [r, g, b] = applySaturation([r, g, b], saturationScale);
 
   // Signature split: deep cyan/teal shadows and brass highlights.
-  r += -0.072 * shadow + 0.092 * highlight + 0.014 * yellow;
-  g += 0.044 * shadow + 0.034 * highlight + 0.01 * yellow;
-  b += 0.104 * shadow - 0.078 * highlight + 0.014 * blue - 0.014 * yellow;
+  r += -0.106 * shadow + 0.135 * highlight + 0.024 * yellow;
+  g += 0.068 * shadow + 0.052 * highlight + 0.016 * yellow;
+  b += 0.152 * shadow - 0.116 * highlight + 0.024 * blue - 0.024 * yellow;
 
   // Blue/green night scenes should be moody, not radioactive.
   if (green + blue > 0.05) {
     const l = pixelLuma([r, g, b]);
-    r = mix(r, l + (r - l) * 0.82, (green + blue) * 0.38);
-    g = mix(g, l + (g - l) * 0.92, green * 0.3);
+    r = mix(r, l + (r - l) * 0.74, (green + blue) * 0.42);
+    g = mix(g, l + (g - l) * 0.86, green * 0.34);
   }
 
   if (skin > 0) {
     const protectedTone = applyLuma(pixel, luma - 0.004 * mid);
-    r = mix(r, protectedTone[0] + 0.01, skin * 0.7);
-    g = mix(g, protectedTone[1] + 0.002, skin * 0.58);
-    b = mix(b, protectedTone[2] - 0.014, skin * 0.66);
+    r = mix(r, protectedTone[0] + 0.014, skin * 0.64);
+    g = mix(g, protectedTone[1] + 0.003, skin * 0.52);
+    b = mix(b, protectedTone[2] - 0.018, skin * 0.58);
   }
 
   return softClip([r, g, b], saturation);
@@ -190,7 +190,7 @@ function lookAmount(strength: number) {
   // More expressive slider response: 70 feels clearly styled, 100 pushes just
   // beyond the designed target while soft clipping keeps it usable.
   const value = clamp01(strength);
-  return Math.min(1.16, Math.pow(value, 0.78) * 1.12);
+  return Math.min(1.42, Math.pow(value, 0.68) * 1.36);
 }
 
 function filmTone(
@@ -275,4 +275,10 @@ function mix(a: number, b: number, amount: number) {
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value));
+}
+
+function limitOutputChannel(value: number) {
+  if (value <= 0) return 0.0005;
+  if (value >= 1) return 0.9995;
+  return value;
 }

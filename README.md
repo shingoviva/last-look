@@ -23,7 +23,7 @@ pnpm install
 pnpm dev
 ```
 
-Open `http://localhost:3000/app`.
+Open `http://localhost:3000/`.
 
 ## QA
 

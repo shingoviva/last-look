@@ -2,7 +2,7 @@
   "name": "LAST LOOK",
   "short_name": "LAST LOOK",
   "description": "Preview Instagram crops, Leica-inspired color looks, and upload risk before exporting clean post-ready images.",
-  "start_url": "./app/",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#050505",
